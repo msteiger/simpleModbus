@@ -3,12 +3,8 @@ package io.github.msteiger.simpleModbus;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
@@ -34,15 +30,15 @@ public class Modbus implements AutoCloseable {
     public static final short PROTOCOL_ID = 0; // always 0 (ModBus protocol ID)
 
     /**
-     * UnitID (1), FunctionCode(1), Register(2), Code(2) add up to 6 bytes
+     * UnitID (4), FunctionCode(1), Register(2), Code(2) add up to 9 bytes
      */
-    private static final short REQUEST_LENGTH = 6;
+    private static final short REQUEST_LENGTH = 9;
 
     private final Socket tcpClientSocket = new Socket();
     private final InputStream inputStream;
     private final OutputStream outputStream;
 
-    private byte unitIdentifier = DEFAULT_UNIT_IDENTIFIER;
+    private int unitIdentifier = DEFAULT_UNIT_IDENTIFIER;
 
     private short transactionId = 4433; // a random identifier
 
@@ -75,13 +71,12 @@ public class Modbus implements AutoCloseable {
         setUnitIdentifier(unitIdentifier);
     }
 
-    public byte getUnitIdentifier() {
+    public int getUnitIdentifier() {
         return unitIdentifier;
     }
 
     public void setUnitIdentifier(int unitIdentifier) {
-        checkByte(unitIdentifier);
-        this.unitIdentifier = (byte)unitIdentifier;
+        this.unitIdentifier = unitIdentifier;
     }
 
     @Override
@@ -103,7 +98,7 @@ public class Modbus implements AutoCloseable {
      * @return the value or {@link Double#NaN} if missing
      * @throws IOException
      */
-    public double readNumber(FunctionCode function, SmaCode code) throws IOException {
+    public double readNumber(FunctionCode function, ModbusCode code) throws IOException {
 
         sendRequest(function, code);
         ByteBuffer response = parseResponse(function, code);
@@ -120,7 +115,7 @@ public class Modbus implements AutoCloseable {
     * @return the value or {@link Double#NaN} if missing
     * @throws IOException
     */
-    public long readLong(FunctionCode function, SmaCode code) throws IOException {
+    public long readLong(FunctionCode function, ModbusCode code) throws IOException {
 
         sendRequest(function, code);
         ByteBuffer response = parseResponse(function, code);
@@ -138,7 +133,7 @@ public class Modbus implements AutoCloseable {
         }
     }
 
-    public String readVersion(FunctionCode function, SmaCode code) throws IOException {
+    public String readVersion(FunctionCode function, ModbusCode code) throws IOException {
 
         sendRequest(function, code);
         ByteBuffer response = parseResponse(function, code);
@@ -160,7 +155,7 @@ public class Modbus implements AutoCloseable {
         return sb.toString();
     }
 
-    public String readString(FunctionCode function, SmaCode code) throws IOException {
+    public String readString(FunctionCode function, ModbusCode code) throws IOException {
 
         byte[] raw = readRaw(function, code);
 
@@ -184,7 +179,7 @@ public class Modbus implements AutoCloseable {
     * @return
     * @throws IOException
     */
-    public byte[] readRaw(FunctionCode function, SmaCode code) throws IOException {
+    public byte[] readRaw(FunctionCode function, ModbusCode code) throws IOException {
 
         sendRequest(function, code);
         ByteBuffer response = parseResponse(function, code);
@@ -202,7 +197,7 @@ public class Modbus implements AutoCloseable {
     * @return
     * @throws IOException
     */
-    public Instant readDatetime(FunctionCode function, SmaCode code) throws IOException {
+    public Instant readDatetime(FunctionCode function, ModbusCode code) throws IOException {
 
         sendRequest(function, code);
         ByteBuffer response = parseResponse(function, code);
@@ -216,7 +211,7 @@ public class Modbus implements AutoCloseable {
         return Instant.ofEpochSecond(value);
     }
 
-    private void sendRequest(FunctionCode function, SmaCode code) throws IOException {
+    private void sendRequest(FunctionCode function, ModbusCode code) throws IOException {
         if (!tcpClientSocket.isConnected()) {
             throw new IOException("Not connected");
         }
@@ -232,7 +227,7 @@ public class Modbus implements AutoCloseable {
         bb.putShort(transactionId);
         bb.putShort(PROTOCOL_ID);
         bb.putShort(REQUEST_LENGTH);
-        bb.put(unitIdentifier);
+        bb.putInt(unitIdentifier);
         bb.put(function.getCode());
         bb.putShort(code.getRegister());
         bb.putShort(code.getCount());
@@ -243,7 +238,7 @@ public class Modbus implements AutoCloseable {
         outputStream.write(bb.array());
     }
 
-    private ByteBuffer parseResponse(FunctionCode function, SmaCode code) throws IOException {
+    private ByteBuffer parseResponse(FunctionCode function, ModbusCode code) throws IOException {
         byte[] responseArray = new byte[1024];
         int numberOfBytes = inputStream.read(responseArray);
 
@@ -311,7 +306,7 @@ public class Modbus implements AutoCloseable {
         return response;
     }
 
-    private static long extractNumber(SmaCode code, ByteBuffer response) {
+    private static long extractNumber(ModbusCode code, ByteBuffer response) {
         long value;
         switch (code.getType()) {
         case S16:
@@ -332,7 +327,7 @@ public class Modbus implements AutoCloseable {
         return value;
     }
 
-    private static double formatNumber(long value, SmaCode code) {
+    private static double formatNumber(long value, ModbusCode code) {
 
         if (value == code.getType().getInvalid()) {
             return Double.NaN;

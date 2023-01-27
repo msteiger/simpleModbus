@@ -4,36 +4,8 @@ import static io.github.msteiger.simpleModbus.Access.*;
 import static io.github.msteiger.simpleModbus.Format.*;
 import static io.github.msteiger.simpleModbus.Type.*;
 
-enum Type {
-    // filled up with 0xFF to 64 bit so it can be compared as long
-    U16(0xFFFFFFFFFFFF0000l),
-    S16(0xFFFFFFFFFFFF8000l),
-    U32(0xFFFFFFFFFFFFFFFFl),
-    S32(0xFFFFFFFF80000000l),
-    U64(0xFFFFFFFFFFFFFFFFl),
-    S64(0x8000000000000000l),
-    STR32(0);
-
-    private long invalid;
-
-    Type(long invalid) {
-        this.invalid = invalid;
-    }
-
-    public long getInvalid() {
-        return invalid;
-    }
-}
-
-
-enum Access {
-    READ_ONLY,
-    READ_WRITE,
-    WRITE_ONLY
-}
-
 @SuppressWarnings({ "unused", "javadoc"})
-public enum SmaCode {
+public enum SmaCode implements ModbusCode {
 
     DCCFG_STRTMS("DcCfg.StrTms", 41155, 2, U32, FIX0, READ_WRITE, "s", "Start delay input", "Startverzögerung Eingang"),
     DCCFG_STRVOL("DcCfg.StrVol", 41131, 2, U32, FIX2, READ_WRITE, "V", "Minimum voltage input", "minimale Spannung Eingang"),
@@ -420,38 +392,47 @@ public enum SmaCode {
         this.descDe = descDe;
     }
 
+    @Override
     public String getName() {
         return nameId;
     }
 
+    @Override
     public short getRegister() {
         return register;
     }
 
+    @Override
     public short getCount() {
         return count;
     }
 
+    @Override
     public Type getType() {
         return type;
     }
 
+    @Override
     public Format getFormat() {
         return format;
     }
 
+    @Override
     public Access getAccess() {
         return access;
     }
 
+    @Override
     public String getUnit() {
         return unit;
     }
 
+    @Override
     public String getDescriptionEnglish() {
         return descEn;
     }
 
+    @Override
     public String getDescriptionGerman() {
         return descDe;
     }

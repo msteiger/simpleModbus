@@ -45,6 +45,9 @@ public class InteractiveTest {
                     DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withZone(ZoneId.systemDefault());
                     text = formatter.format(mb.readDatetime(FunctionCode.READ_HOLDING_REGISTER, code));
                 }
+                else if (fmt == Format.RAW) {
+                    text = "" + mb.readLong(FunctionCode.READ_HOLDING_REGISTER, code);
+                }
                 else {
                     double value = mb.readNumber(FunctionCode.READ_HOLDING_REGISTER, code);
                     text = Double.isNaN(value) ? "-" : value + " " + code.getUnit();
