@@ -7,27 +7,27 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Arrays;
 
+import io.github.msteiger.simpleModbus.DeyeCode;
 import io.github.msteiger.simpleModbus.Format;
 import io.github.msteiger.simpleModbus.FunctionCode;
 import io.github.msteiger.simpleModbus.Modbus;
 import io.github.msteiger.simpleModbus.SmaCode;
 
-public class InteractiveTest {
+public class DeyeTest {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        String name = "sma1930209829";
-//        String ipAddress = "192.168.178.95";
-        int port = 502;
+        String ipAddress = "192.168.178.122";
+        int port = 8899;
 
 
 
-        try (Modbus mb = new Modbus(name)) {
-            mb.setUnitIdentifier(3);
+        try (Modbus mb = new Modbus(ipAddress, port)) {
+            mb.setUnitIdentifier((int)2209185179L);
 
-            for (SmaCode code : SmaCode.values()) {
+            for (DeyeCode code : DeyeCode.values()) {
 
-                code = SmaCode.OPERATION_OPSTT;
+//                code = SmaCode.OPERATION_OPSTT;
 
                 String text;
                 Format fmt = code.getFormat();
